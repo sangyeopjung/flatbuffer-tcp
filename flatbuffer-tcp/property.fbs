@@ -1,0 +1,10 @@
+namespace Schema;
+
+table Property {
+  name:string;
+  value:int;
+  type:int;
+  subproperties:[Property];
+}
+
+root_type Property;

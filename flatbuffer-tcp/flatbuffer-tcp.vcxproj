@@ -139,7 +139,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="basic_tcp_client.cpp" />
+    <ClCompile Include="basic_tcp_server.cpp" />
     <ClCompile Include="flatbuffer-tcp.cpp" />
+    <ClCompile Include="fb_property_manager.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="property.fbs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="basic_tcp_client.h" />
+    <ClInclude Include="basic_tcp_server.h" />
+    <ClInclude Include="property.h" />
+    <ClInclude Include="property_generated.h" />
+    <ClInclude Include="fb_property_manager.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
