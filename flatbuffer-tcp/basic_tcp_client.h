@@ -20,9 +20,9 @@ public:
 
         WSADATA wsa_data;
         connect_socket = INVALID_SOCKET;
-        struct addrinfo *result = NULL,
-                        *ptr = NULL,
-                        hints;
+        struct addrinfo* result = NULL,
+            * ptr = NULL,
+            hints;
 
         // Initialise Winsock
         i_result = WSAStartup(MAKEWORD(2, 2), &wsa_data);
@@ -47,7 +47,7 @@ public:
         }
 
         // Attempt to connect to an address until one succeeds
-        for (ptr = result; ptr != NULL; ptr = ptr->ai_next) 
+        for (ptr = result; ptr != NULL; ptr = ptr->ai_next)
         {
             // Create a socket for connecting to server
             connect_socket = socket(ptr->ai_family, ptr->ai_socktype, ptr->ai_protocol);
@@ -92,7 +92,7 @@ public:
     void Send(std::shared_ptr<T> object, size_t buflen)
     {
         flatbuffers::FlatBufferBuilder builder(buflen);
-        auto* serialized = T::Serialize(builder, object);
+        auto* serialized = Serializable::Serialize<T>(builder, object);
 
         int i_result = send(connect_socket, serialized, builder.GetSize(), 0);
         if (i_result == SOCKET_ERROR)
@@ -123,4 +123,3 @@ private:
     SOCKET connect_socket;
     int i_result;
 };
-

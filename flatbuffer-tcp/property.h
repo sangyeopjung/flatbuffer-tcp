@@ -65,8 +65,8 @@ private:
 	std::unordered_map<std::string, std::shared_ptr<Property>> subproperties_;
 
 	static flatbuffers::Offset<Schema::Property> SerializeHelper(flatbuffers::FlatBufferBuilder& builder,
-																 std::shared_ptr<Property> property, 
-																 unsigned int depth);
+		std::shared_ptr<Property> property,
+		unsigned int depth);
 	static std::shared_ptr<Property> DeserializeHelper(const Schema::Property* fb_property);
 
 	void Print(int depth)

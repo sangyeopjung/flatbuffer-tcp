@@ -13,7 +13,7 @@ int main(int argc, char* argv[])
     char buffer[buflen];
     BasicTcpServer server;
     std::thread server_thread([&]() { server.Listen<Property>(buffer, buflen); });
-    
+
     BasicTcpClient client;
     // create some dummy tree that increases in size to send over
     auto root = std::make_shared<Property>("root", 0, 0);
