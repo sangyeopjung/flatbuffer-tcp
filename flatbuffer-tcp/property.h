@@ -1,18 +1,21 @@
 #pragma once
 
+#include "serializable.h"
+#include "property_generated.h"
+
 #include <iostream>
 #include <string>
 #include <unordered_map>
 #include <memory>
 
-class Property
+class Property : public Serializable
 {
 public:
-	Property(std::string name, int value, int type, std::unordered_map <std::string, std::shared_ptr<Property >> subproperties)
+	Property(std::string name, int value, int type, std::unordered_map <std::string, std::shared_ptr<Property>> subproperties)
 		: name_(std::move(name)), value_(value), type_(type), subproperties_(std::move(subproperties)) {}
 
 	Property(std::string name, int value, int type)
-		: Property(name, value, type, {}) {}
+		: Property(std::move(name), value, type, {}) {}
 
 	~Property() {}
 
@@ -28,18 +31,25 @@ public:
 	{
 		subproperties_[property->GetName()] = property;
 	}
-
-	static void Print(const Property& property, int depth = 0)
+	void SetSubproperty(const std::string& name, int new_val, int new_type)
 	{
-		for (int i = 0; i < depth; i++)
+		if (subproperties_.find(name) != subproperties_.end())
 		{
-			std::cout << '\t';
+			subproperties_[name]->SetValue(new_val);
+			subproperties_[name]->SetType(new_type);
 		}
-		std::cout << '-' << property << '\n';
-		for (auto& it : property.subproperties_)
+		else
 		{
-			Property::Print(*it.second, depth + 1);
+			SetSubproperty(std::make_shared<Property>(name, new_val, new_type));
 		}
+	}
+
+	static char* Serialize(flatbuffers::FlatBufferBuilder& builder, std::shared_ptr<Property> property);
+	static std::shared_ptr<Property> Deserialize(char* buffer);
+
+	virtual void Print() override
+	{
+		Print(0);
 	}
 
 	friend std::ostream& operator<<(std::ostream& os, const Property& property)
@@ -53,4 +63,24 @@ private:
 	int value_;
 	int type_;
 	std::unordered_map<std::string, std::shared_ptr<Property>> subproperties_;
+
+	static flatbuffers::Offset<Schema::Property> SerializeHelper(flatbuffers::FlatBufferBuilder& builder,
+																 std::shared_ptr<Property> property, 
+																 unsigned int depth);
+	static std::shared_ptr<Property> DeserializeHelper(const Schema::Property* fb_property);
+
+	void Print(int depth)
+	{
+		for (int i = 0; i < depth; i++)
+		{
+			std::cout << '\t';
+		}
+		std::cout << '-' << *this << '\n';
+		for (auto& it : this->subproperties_)
+		{
+			it.second->Print(depth + 1);
+		}
+	}
+
+	static constexpr unsigned int MAX_DEPTH = 100;
 };

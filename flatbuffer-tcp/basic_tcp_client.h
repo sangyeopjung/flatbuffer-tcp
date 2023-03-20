@@ -1,10 +1,9 @@
 #pragma once
 
-#include "fb_property_manager.h"
+#include "serializable.h"
 
 #include <winsock2.h>
 #include <ws2tcpip.h>
-
 #include <iostream>
 
 #pragma comment(lib, "Ws2_32.lib")
@@ -17,7 +16,7 @@ class BasicTcpClient
 public:
     BasicTcpClient()
     {
-        std::cout << "Initialising client" << std::endl;
+        std::cout << "[CLIENT] Initialising client \n";
 
         WSADATA wsa_data;
         connect_socket = INVALID_SOCKET;
@@ -27,8 +26,9 @@ public:
 
         // Initialise Winsock
         i_result = WSAStartup(MAKEWORD(2, 2), &wsa_data);
-        if (i_result != 0) {
-            std::cerr << "WSAStartup failed with error: " << i_result << '\n';
+        if (i_result != 0)
+        {
+            std::cerr << "[CLIENT] WSAStartup failed with error: " << i_result << '\n';
             exit(1);
         }
 
@@ -41,7 +41,7 @@ public:
         i_result = getaddrinfo(DEFAULT_CLIENT_ADDRESS, DEFAULT_CLIENT_PORT, &hints, &result);
         if (i_result != 0)
         {
-            std::cerr << "getaddrinfo failed with error: " << i_result << '\n';
+            std::cerr << "[CLIENT] getaddrinfo failed with error: " << i_result << '\n';
             WSACleanup();
             exit(1);
         }
@@ -53,7 +53,7 @@ public:
             connect_socket = socket(ptr->ai_family, ptr->ai_socktype, ptr->ai_protocol);
             if (connect_socket == INVALID_SOCKET)
             {
-                std::cerr << "socket failed with error: " << WSAGetLastError() << '\n';
+                std::cerr << "[CLIENT] socket failed with error: " << WSAGetLastError() << '\n';
                 WSACleanup();
                 exit(1);
             }
@@ -71,34 +71,52 @@ public:
 
         freeaddrinfo(result);
 
-        if (connect_socket == INVALID_SOCKET) {
-            std::cerr << "Unable to connect to server! \n";
+        if (connect_socket == INVALID_SOCKET)
+        {
+            std::cerr << "[CLIENT] Unable to connect to server! \n";
             WSACleanup();
             exit(1);
         }
 
-        std::cout << "Initialised client" << std::endl;
+        std::cout << "[CLIENT] Initialised client \n";
     }
 
     ~BasicTcpClient()
     {
+        std::cout << "[CLIENT] Closing client \n";
         closesocket(connect_socket);
         WSACleanup();
     }
 
-    void Send(std::shared_ptr<Property> property, size_t buflen)
+    template<typename T>
+    void Send(std::shared_ptr<T> object, size_t buflen)
     {
         flatbuffers::FlatBufferBuilder builder(buflen);
-        auto* serialized = FbPropertyManager::GetInstance().Serialize(builder, property);
+        auto* serialized = T::Serialize(builder, object);
 
         int i_result = send(connect_socket, serialized, builder.GetSize(), 0);
-        if (i_result == SOCKET_ERROR) {
-            std::cerr << "send failed with error: " << WSAGetLastError() << '\n';
+        if (i_result == SOCKET_ERROR)
+        {
+            std::cerr << "[CLIENT] send failed with error: " << WSAGetLastError() << '\n';
             closesocket(connect_socket);
             WSACleanup();
             exit(1);
         }
-        std::cout << "Bytes Sent: " << i_result << '\n';
+        std::cout << "[CLIENT] Bytes Sent: " << i_result << '\n';
+    }
+
+    void Shutdown()
+    {
+        std::cout << "[CLIENT] Shutting down client\n";
+        // shutdown the connection since no more data will be sent
+        i_result = shutdown(connect_socket, SD_SEND);
+        if (i_result == SOCKET_ERROR)
+        {
+            std::cerr << "[CLIENT] shutdown failed with error: " << WSAGetLastError() << '\n';
+            closesocket(connect_socket);
+            WSACleanup();
+            exit(1);
+        }
     }
 
 private:

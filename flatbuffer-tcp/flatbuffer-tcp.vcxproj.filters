@@ -18,13 +18,7 @@
     <ClCompile Include="flatbuffer-tcp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="fb_property_manager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="basic_tcp_client.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="basic_tcp_server.cpp">
+    <ClCompile Include="property.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -40,13 +34,13 @@
     <ClInclude Include="property.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="fb_property_manager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="basic_tcp_client.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="basic_tcp_server.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="serializable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

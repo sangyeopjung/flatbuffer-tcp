@@ -1,10 +1,9 @@
 #pragma once
 
-#include "fb_property_manager.h"
+#include "serializable.h"
 
 #include <winsock2.h>
 #include <ws2tcpip.h>
-
 #include <iostream>
 
 #pragma comment(lib, "Ws2_32.lib")
@@ -16,7 +15,7 @@ class BasicTcpServer
 public:
     BasicTcpServer()
     {
-        std::cout << "Initialising server" << std::endl;
+        std::cout << "[SERVER] Initialising server\n";
         WSADATA wsa_data;
 
         listen_socket = INVALID_SOCKET;
@@ -29,7 +28,7 @@ public:
         i_result = WSAStartup(MAKEWORD(2, 2), &wsa_data);
         if (i_result != 0)
         {
-            std::cerr << "WSAStartup failed with error: " << i_result << '\n';
+            std::cerr << "[SERVER] WSAStartup failed with error: " << i_result << '\n';
             exit(1);
         }
 
@@ -42,16 +41,18 @@ public:
 
         // Resolve the server address and port
         i_result = getaddrinfo(NULL, DEFAULT_SERVER_PORT, &hints, &result);
-        if (i_result != 0) {
-            std::cerr << "getaddrinfo failed with error: " << i_result << '\n';
+        if (i_result != 0)
+        {
+            std::cerr << "[SERVER] getaddrinfo failed with error: " << i_result << '\n';
             WSACleanup();
             exit(1);
         }
 
         // Create a SOCKET for connecting to server
         listen_socket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
-        if (listen_socket == INVALID_SOCKET) {
-            std::cerr << "socket failed with error: " << WSAGetLastError() << '\n';
+        if (listen_socket == INVALID_SOCKET)
+        {
+            std::cerr << "[SERVER] socket failed with error: " << WSAGetLastError() << '\n';
             freeaddrinfo(result);
             WSACleanup();
             exit(1);
@@ -59,8 +60,9 @@ public:
 
         // Setup the TCP listening socket
         i_result = bind(listen_socket, result->ai_addr, (int)result->ai_addrlen);
-        if (i_result == SOCKET_ERROR) {
-            std::cerr << "bind failed with error: " << WSAGetLastError() << '\n';
+        if (i_result == SOCKET_ERROR)
+        {
+            std::cerr << "[SERVER] bind failed with error: " << WSAGetLastError() << '\n';
             freeaddrinfo(result);
             closesocket(listen_socket);
             WSACleanup();
@@ -72,16 +74,25 @@ public:
 
         // start listening for new clients attempting to connect
         i_result = listen(listen_socket, SOMAXCONN);
-        if (i_result == SOCKET_ERROR) {
-            std::cerr << "listen failed with error: " << WSAGetLastError() << '\n';
+        if (i_result == SOCKET_ERROR)
+        {
+            std::cerr << "[SERVER] listen failed with error: " << WSAGetLastError() << '\n';
             closesocket(listen_socket);
             WSACleanup();
             exit(1);
         }
 
-        std::cout << "Initialised server" << std::endl;
+        std::cout << "[SERVER] Initialised server\n";
     }
 
+    ~BasicTcpServer()
+    {
+        std::cout << "[SERVER] Closing server\n";
+        closesocket(client_socket);
+        WSACleanup();
+    }
+
+    template<typename T>
     void Listen(char* buffer, int buflen)
     {
         do
@@ -91,37 +102,33 @@ public:
 
         closesocket(listen_socket);
 
-        std::cout << "Listening to client" << std::endl;
+        std::cout << "[SERVER] Listening to client\n";
         do
         {
             i_result = recv(client_socket, buffer, buflen, 0);
-            if (i_result > 0) {
-                std::cout << "Bytes received: " << i_result << '\n';
+            if (i_result > 0)
+            {
+                std::cout << "[SERVER] Bytes received: " << i_result << '\n';
 
                 // Echo the buffer back to the sender
                 int i_send_result = send(client_socket, buffer, i_result, 0);
-                if (i_send_result == SOCKET_ERROR) {
-                    std::cerr << "send failed with error: " << WSAGetLastError() << '\n';
+                if (i_send_result == SOCKET_ERROR)
+                {
+                    std::cerr << "[SERVER] send failed with error: " << WSAGetLastError() << '\n';
                     closesocket(client_socket);
                     WSACleanup();
                     exit(1);
                 }
-                std::cout << "Bytes sent: " << i_send_result << '\n';
+                std::cout << "[SERVER] Bytes sent: " << i_send_result << '\n';
 
-                auto deserialized = FbPropertyManager::GetInstance().Deserialize(buffer);
-                Property::Print(*deserialized);
+                auto deserialized = Serializable::Deserialize<T>(buffer);
+                deserialized->Print();
             }
             else if (i_result == 0)
             {
-                std::cout << "Connection closing...\n";
+                std::cout << "[SERVER] Connection closing...\n";
             }
         } while (i_result > 0);
-    }
-
-    ~BasicTcpServer()
-    {
-        closesocket(client_socket);
-        WSACleanup();
     }
 
 private:
